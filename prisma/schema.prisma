@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Destination {
+  id         Int          @id @default(autoincrement())
+  name       String
+  metadata   Json
+  active     Boolean      @default(true)
+  parentId   Int? 
+  parent     Destination? @relation("DestinationHierarchy", fields: [parentId], references: [id])
+  children   Destination[] @relation("DestinationHierarchy")
+
+  regions    Region[]
+  properties Property[]
+}
+
+model Region {
+  id            Int          @id @default(autoincrement())
+  name          String
+  metadata      Json
+  active        Boolean      @default(true)
+  parentId      Int?
+  parent        Region?      @relation("RegionHierarchy", fields: [parentId], references: [id])
+  children      Region[]     @relation("RegionHierarchy")
+  destinationId Int
+  destination   Destination  @relation(fields: [destinationId], references: [id])
+
+  properties    Property[]
+}
+
+model Property {
+  id            Int        @id @default(autoincrement())
+  name          String
+  destinationId Int
+  destination   Destination @relation(fields: [destinationId], references: [id])
+  regionId      Int
+  region        Region      @relation(fields: [regionId], references: [id])
+  address       String
+  contactNumber String
+  description   String
+}
+
