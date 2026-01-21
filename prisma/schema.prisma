@@ -50,5 +50,7 @@ model Property {
   address       String
   contactNumber String
   description   String
+  isActive       Boolean     @default(true)
 }
+
 

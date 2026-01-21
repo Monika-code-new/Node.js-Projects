@@ -1,4 +1,4 @@
-
+// Services/Property.Service.ts
 import { prisma } from '../Prisma/Client';
 import { GetPropertiesParams, PropertyResponse } from '../Utils/Type';
 import { AppError } from '../Utils/AppError';
@@ -6,21 +6,34 @@ import { errorMessage } from '../Utils/Messages.Enum';
 import { HttpStatusCode } from '../Utils/StatusCode.Enum';
 
 export const getAllProperties = async (
-  parsedQuery: GetPropertiesParams
+  parsedQuery: GetPropertiesParams,
+  role: string
 ): Promise<PropertyResponse[]> => {
 
   const { destinationId } = parsedQuery;
+  const isAdmin = role === 'admin'; 
+
+  
   if (!destinationId) {
     const properties = await prisma.property.findMany({
+      where: isAdmin
+        ? {}
+        : {
+            isActive: true,
+            destination: { active: true }, 
+          },
       orderBy: { id: 'asc' },
       include: {
         destination: { select: { id: true, name: true } },
-        region: { select: { name: true } }
-      }
+        region: { select: { name: true } },
+      },
     });
 
     if (!properties.length) {
-      throw new AppError(errorMessage.NO_PROPERTIES_FOUND, HttpStatusCode.NOT_FOUND);
+      throw new AppError(
+        errorMessage.NO_PROPERTIES_FOUND,
+        HttpStatusCode.NOT_FOUND
+      );
     }
 
     return properties.map(p => ({
@@ -31,38 +44,50 @@ export const getAllProperties = async (
       address: p.address,
       contact_number: p.contactNumber,
       description: p.description,
-      region_name: p.region.name
+      region_name: p.region.name,
     }));
   }
+
+  
   const destinations = await prisma.destination.findMany({
     where: {
-      OR: [
-        { id: destinationId },
-        { parentId: destinationId }
-      ]
+      OR: [{ id: destinationId }, { parentId: destinationId }],
+      ...(isAdmin ? {} : { active: true }),
     },
-    select: { id: true }
+    select: { id: true },
   });
 
   if (!destinations.length) {
-    throw new AppError(errorMessage.DESTINATION_NOT_FOUND, HttpStatusCode.NOT_FOUND);
+    throw new AppError(
+      errorMessage.DESTINATION_NOT_FOUND,
+      HttpStatusCode.NOT_FOUND
+    );
   }
 
   const destinationIds = destinations.map(d => d.id);
 
   const properties = await prisma.property.findMany({
     where: {
-      destinationId: { in: destinationIds }
+      destinationId: { in: destinationIds },
+      ...(isAdmin
+        ? {}
+        : {
+            isActive: true,
+            destination: { active: true }, 
+          }),
     },
     orderBy: { id: 'asc' },
     include: {
       destination: { select: { id: true, name: true } },
-      region: { select: { name: true } }
-    }
+      region: { select: { name: true } },
+    },
   });
 
   if (!properties.length) {
-    throw new AppError(errorMessage.NO_PROPERTIES_FOUND, HttpStatusCode.NOT_FOUND);
+    throw new AppError(
+      errorMessage.NO_PROPERTIES_FOUND,
+      HttpStatusCode.NOT_FOUND
+    );
   }
 
   return properties.map(p => ({
@@ -73,6 +98,6 @@ export const getAllProperties = async (
     address: p.address,
     contact_number: p.contactNumber,
     description: p.description,
-    region_name: p.region.name
+    region_name: p.region.name,
   }));
 };

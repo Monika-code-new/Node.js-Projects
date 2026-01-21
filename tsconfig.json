@@ -1,4 +1,4 @@
-{
+ {
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "Node",
@@ -6,4 +6,4 @@
     "outDir": "dist",
     "rootDir": "src"
   }
-}
+} 

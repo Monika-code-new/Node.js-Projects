@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
-import { errorHandler } from './Utils/ErrorHandler';
+//import { errorHandler } from './Utils/ErrorHandler';
+
 
 import Routes from './Routes';
 
@@ -10,10 +11,11 @@ async function start() {
   });
 
   // Register centralized error handler
-  app.setErrorHandler(errorHandler);
+  //app.setErrorHandler(errorHandler);
 
   // Register routes
   app.register(Routes, { prefix: '/api' });
+  
 
   try {
     await app.listen({
