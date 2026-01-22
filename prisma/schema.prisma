@@ -53,4 +53,10 @@ model Property {
   isActive       Boolean     @default(true)
 }
 
+model Airport {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+
 

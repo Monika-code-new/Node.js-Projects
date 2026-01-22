@@ -15,3 +15,9 @@ export interface PropertyResponse {
   description: string;
   region_name: string;
 }
+ export interface DestinationMetadata {
+  contact?: string;
+  address?: string;
+  description?: string;
+  airportIds?: number[];
+}
