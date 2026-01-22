@@ -20,14 +20,14 @@ export const getAllProperties = async (
   const { destinationId } = parsedQuery;
   const isAdmin = role === 'admin';
 
-  // Helper to fetch airports for destinations
+  
   const getDestinationAirports = async (destinationIds: number[]) => {
     const destinations = await prisma.destination.findMany({
       where: { id: { in: destinationIds }, ...(isAdmin ? {} : { active: true }) },
       select: { id: true, metadata: true },
     });
 
-    // Collect unique airport IDs
+    
     const airportIdsSet = new Set<number>();
     destinations.forEach(d => {
       const metadata = d.metadata as DestinationMetadata;
@@ -36,16 +36,16 @@ export const getAllProperties = async (
 
     const airportIds = Array.from(airportIdsSet);
 
-    // Fetch airports in one query
+    
     const airports = airportIds.length
       ? await prisma.airport.findMany({ where: { id: { in: airportIds } } })
       : [];
 
-    // Map airport ID → airport object
+    
     const airportMap = new Map<number, { id: number; name: string }>();
     airports.forEach(a => airportMap.set(a.id, { id: a.id, name: a.name }));
 
-    // Map destinationId → airports array
+   
     const destinationAirportMap = new Map<number, { id: number; name: string }[]>();
     destinations.forEach(d => {
       const metadata = d.metadata as DestinationMetadata;
@@ -59,7 +59,7 @@ export const getAllProperties = async (
     return destinationAirportMap;
   };
 
-  // Case 1: No specific destination ID
+  
   if (!destinationId) {
     const properties = await prisma.property.findMany({
       where: isAdmin
@@ -101,7 +101,7 @@ export const getAllProperties = async (
     );
   }
 
-  // Case 2: Specific destination ID
+ 
   const destinations = await prisma.destination.findMany({
     where: {
       OR: [{ id: destinationId }, { parentId: destinationId }],
