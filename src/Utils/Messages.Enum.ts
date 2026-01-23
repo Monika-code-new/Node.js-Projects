@@ -4,4 +4,9 @@ export enum errorMessage {
   VALIDATION_ERROR = 'Validation Error',
   DESTINATION_NOT_FOUND = 'Destination not found',
   NO_PROPERTIES_FOUND = 'No properties found',
+  INVALID_ROLE ='Invalid Role'
+}
+export enum UserRole {
+  ADMIN = 'admin',
+  USER = 'user',
 }

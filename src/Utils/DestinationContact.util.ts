@@ -5,9 +5,9 @@ export const findDestinationContact = async (
   visited = new Set<number>()
 ): Promise<string | null> => {
 
-  if (visited.has(destinationId)) {
+   if (visited.has(destinationId)) {
     return null;
-  }
+  } 
   visited.add(destinationId);
 
   const destination = await prisma.destination.findUnique({
@@ -32,9 +32,10 @@ export const findDestinationContact = async (
     return contact;
   }
 
-  else {
-    return findDestinationContact(destination.parentId, visited);
+  if (!destination.parentId) {
+    return null;
   }
-
   
+    return findDestinationContact(destination.parentId,visited);
+   
 };

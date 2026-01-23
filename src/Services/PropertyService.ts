@@ -1,4 +1,3 @@
-// Services/Property.Service.ts
 import { prisma } from '../Prisma/Client';
 import { GetPropertiesParams, PropertyResponse } from '../Utils/Type';
 import { AppError } from '../Utils/AppError';
@@ -21,16 +20,19 @@ export const getAllProperties = async (
   const isAdmin = role === 'admin';
 
   
-  const getDestinationAirports = async (destinationIds: number[]) => {
-    const destinations = await prisma.destination.findMany({
-      where: { id: { in: destinationIds }, ...(isAdmin ? {} : { active: true }) },
-      select: { id: true, metadata: true },
-    });
-
-    
+  const getDestinationAirports = async (
+    properties: {
+      destination: {
+        id: number;
+        metadata: any;
+      };
+    }[]
+  ) => {
+   
     const airportIdsSet = new Set<number>();
-    destinations.forEach(d => {
-      const metadata = d.metadata as DestinationMetadata;
+
+    properties.forEach(p => {
+      const metadata = p.destination.metadata as DestinationMetadata;
       (metadata.airportIds || []).forEach(id => airportIdsSet.add(id));
     });
 
@@ -38,21 +40,31 @@ export const getAllProperties = async (
 
     
     const airports = airportIds.length
-      ? await prisma.airport.findMany({ where: { id: { in: airportIds } } })
+      ? await prisma.airport.findMany({
+          where: { id: { in: airportIds } },
+          select: { id: true, name: true },
+        })
       : [];
 
     
     const airportMap = new Map<number, { id: number; name: string }>();
-    airports.forEach(a => airportMap.set(a.id, { id: a.id, name: a.name }));
+    airports.forEach(a => airportMap.set(a.id, a));
 
-   
-    const destinationAirportMap = new Map<number, { id: number; name: string }[]>();
-    destinations.forEach(d => {
-      const metadata = d.metadata as DestinationMetadata;
+    
+    const destinationAirportMap = new Map<
+      number,
+      { id: number; name: string }[]
+    >();
+
+    properties.forEach(p => {
+      const metadata = p.destination.metadata as DestinationMetadata;
       const ids = metadata.airportIds || [];
+
       destinationAirportMap.set(
-        d.id,
-        ids.map(id => airportMap.get(id)).filter(Boolean) as { id: number; name: string }[]
+        p.destination.id,
+        ids
+          .map(id => airportMap.get(id))
+          .filter(Boolean) as { id: number; name: string }[]
       );
     });
 
@@ -70,21 +82,27 @@ export const getAllProperties = async (
           },
       orderBy: { id: 'asc' },
       include: {
-        destination: { select: { id: true, name: true } },
+        destination: {
+          select: { id: true, name: true, metadata: true },
+        },
         region: { select: { name: true } },
       },
     });
 
     if (!properties.length) {
-      throw new AppError(errorMessage.NO_PROPERTIES_FOUND, HttpStatusCode.NOT_FOUND);
+      throw new AppError(
+        errorMessage.NO_PROPERTIES_FOUND,
+        HttpStatusCode.NOT_FOUND
+      );
     }
 
-    const destinationIds = [...new Set(properties.map(p => p.destination.id))];
-    const destinationAirportMap = await getDestinationAirports(destinationIds);
+    const destinationAirportMap = await getDestinationAirports(properties);
 
-    return await Promise.all(
-      properties.map(async (p) => {
-        const destination_contact_number = await findDestinationContact(p.destination.id);
+    return Promise.all(
+      properties.map(async p => {
+        const destination_contact_number =
+          await findDestinationContact(p.destination.id);
+
         return {
           id: p.id,
           name: p.name,
@@ -101,7 +119,7 @@ export const getAllProperties = async (
     );
   }
 
- 
+  
   const destinations = await prisma.destination.findMany({
     where: {
       OR: [{ id: destinationId }, { parentId: destinationId }],
@@ -111,7 +129,10 @@ export const getAllProperties = async (
   });
 
   if (!destinations.length) {
-    throw new AppError(errorMessage.DESTINATION_NOT_FOUND, HttpStatusCode.NOT_FOUND);
+    throw new AppError(
+      errorMessage.DESTINATION_NOT_FOUND,
+      HttpStatusCode.NOT_FOUND
+    );
   }
 
   const destinationIds = destinations.map(d => d.id);
@@ -128,20 +149,27 @@ export const getAllProperties = async (
     },
     orderBy: { id: 'asc' },
     include: {
-      destination: { select: { id: true, name: true } },
+      destination: {
+        select: { id: true, name: true, metadata: true },
+      },
       region: { select: { name: true } },
     },
   });
 
   if (!properties.length) {
-    throw new AppError(errorMessage.NO_PROPERTIES_FOUND, HttpStatusCode.NOT_FOUND);
+    throw new AppError(
+      errorMessage.NO_PROPERTIES_FOUND,
+      HttpStatusCode.NOT_FOUND
+    );
   }
 
-  const destinationAirportMap = await getDestinationAirports(destinationIds);
+  const destinationAirportMap = await getDestinationAirports(properties);
 
-  return await Promise.all(
-    properties.map(async (p) => {
-      const destination_contact_number = await findDestinationContact(p.destination.id);
+  return Promise.all(
+    properties.map(async p => {
+      const destination_contact_number =
+        await findDestinationContact(p.destination.id);
+
       return {
         id: p.id,
         name: p.name,

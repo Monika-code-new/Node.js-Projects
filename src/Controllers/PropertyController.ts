@@ -1,9 +1,12 @@
 
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { getPropertiesQuerySchema } from '../Schemas/Property.Schema';
-import { getAllProperties } from '../Services/Property.Service';
+import { getPropertiesQuerySchema } from '../Schemas/PropertySchema';
+import { getAllProperties } from '../Services/PropertyService';
 import { GetPropertiesParams } from '../Utils/Type';
 import { sendSuccessResponse } from '../Utils/Response.Util';
+import { HttpStatusCode } from '../Utils/StatusCode.Enum';
+import { AppError } from '../Utils/AppError';
+import { errorMessage,UserRole } from '../Utils/Messages.Enum';
 
 export class PropertyController {
   static async getProperties(req: FastifyRequest, reply: FastifyReply) {
@@ -17,19 +20,22 @@ export class PropertyController {
       const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : 'user'; 
 
       
-      if (!['admin', 'user'].includes(role)) {
-        return reply.code(400).send({ message: 'Invalid role' });
+      if (!Object.values(UserRole).includes(role as UserRole)) {
+        throw new AppError (errorMessage.INVALID_ROLE,HttpStatusCode.BAD_REQUEST);
       }
 
       
       const properties = await getAllProperties(parsedQuery, role);
+      if (!properties || properties.length === 0) {
+        throw new AppError(
+          errorMessage.NO_PROPERTIES_FOUND,
+          HttpStatusCode.NOT_FOUND
+        );
+      }
 
       return sendSuccessResponse(reply, properties);
-    } catch (error: any) {
-      reply.code(error?.statusCode || 500).send({
-        success: false,
-        message: error?.message || 'Internal Server Error',
-      });
+    } catch (error) {
+       throw error
     }
   }
 }
