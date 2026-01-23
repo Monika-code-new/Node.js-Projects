@@ -1,16 +1,11 @@
 import { prisma } from '../Prisma/Client';
-import { GetPropertiesParams, PropertyResponse } from '../Utils/Type';
+import { GetPropertiesParams, PropertyResponse,DestinationMetadata } from '../Utils/Type';
 import { AppError } from '../Utils/AppError';
 import { errorMessage } from '../Utils/Messages.Enum';
 import { HttpStatusCode } from '../Utils/StatusCode.Enum';
 import { findDestinationContact } from '../Utils/DestinationContact.util';
 
-interface DestinationMetadata {
-  contact?: string;
-  address?: string;
-  description?: string;
-  airportIds?: number[];
-}
+
 
 export const getAllProperties = async (
   parsedQuery: GetPropertiesParams,
