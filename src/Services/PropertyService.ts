@@ -1,20 +1,40 @@
 import { prisma } from '../Prisma/Client';
-import { GetPropertiesParams, PropertyResponse,DestinationMetadata } from '../Utils/Type';
+import {
+  GetPropertiesParams,
+  PropertyResponse,
+  DestinationMetadata,
+} from '../Utils/Type';
 import { AppError } from '../Utils/AppError';
 import { errorMessage } from '../Utils/Messages.Enum';
 import { HttpStatusCode } from '../Utils/StatusCode.Enum';
 import { findDestinationContact } from '../Utils/DestinationContact.util';
+import redis from '../RedisClient';
 
-
+//const CACHE_TTL = 60; // seconds
+const CACHE_TTL = parseInt(process.env.CACHE_TTL || '60', 10);
 
 export const getAllProperties = async (
   parsedQuery: GetPropertiesParams,
-  role: string
+  role: string,
+  
 ): Promise<PropertyResponse[]> => {
   const { destinationId } = parsedQuery;
   const isAdmin = role === 'admin';
 
-  
+  const cacheKey = `properties:${role}:${JSON.stringify(parsedQuery)}`;
+
+  //CACHE READ 
+  try {
+    const cachedData = await redis.get(cacheKey);
+    if (cachedData) {
+      console.log('Cache HIT');
+      return JSON.parse(cachedData);
+    }
+  } catch (err) {
+    console.warn('Redis GET failed, skipping cache');
+  }
+
+  //DESTINATION AIRPORTS 
   const getDestinationAirports = async (
     properties: {
       destination: {
@@ -23,7 +43,6 @@ export const getAllProperties = async (
       };
     }[]
   ) => {
-   
     const airportIdsSet = new Set<number>();
 
     properties.forEach(p => {
@@ -33,7 +52,6 @@ export const getAllProperties = async (
 
     const airportIds = Array.from(airportIdsSet);
 
-    
     const airports = airportIds.length
       ? await prisma.airport.findMany({
           where: { id: { in: airportIds } },
@@ -41,11 +59,9 @@ export const getAllProperties = async (
         })
       : [];
 
-    
     const airportMap = new Map<number, { id: number; name: string }>();
     airports.forEach(a => airportMap.set(a.id, a));
 
-    
     const destinationAirportMap = new Map<
       number,
       { id: number; name: string }[]
@@ -66,7 +82,7 @@ export const getAllProperties = async (
     return destinationAirportMap;
   };
 
-  
+  // NO DESTINATION FILTER 
   if (!destinationId) {
     const properties = await prisma.property.findMany({
       where: isAdmin
@@ -93,7 +109,7 @@ export const getAllProperties = async (
 
     const destinationAirportMap = await getDestinationAirports(properties);
 
-    return Promise.all(
+    const response: PropertyResponse[] = await Promise.all(
       properties.map(async p => {
         const destination_contact_number =
           await findDestinationContact(p.destination.id);
@@ -109,9 +125,18 @@ export const getAllProperties = async (
           description: p.description,
           region_name: p.region.name,
           airports: destinationAirportMap.get(p.destination.id) || [],
+          
         };
       })
     );
+
+    try {
+      await redis.set(cacheKey, JSON.stringify(response), 'EX', CACHE_TTL);
+    } catch (err) {
+      console.warn('Redis SET failed, skipping cache');
+    }
+
+    return response;
   }
 
   
@@ -160,7 +185,7 @@ export const getAllProperties = async (
 
   const destinationAirportMap = await getDestinationAirports(properties);
 
-  return Promise.all(
+  const response: PropertyResponse[] = await Promise.all(
     properties.map(async p => {
       const destination_contact_number =
         await findDestinationContact(p.destination.id);
@@ -179,4 +204,12 @@ export const getAllProperties = async (
       };
     })
   );
+
+  try {
+    await redis.set(cacheKey, JSON.stringify(response), 'EX', CACHE_TTL);
+  } catch (err) {
+    console.warn('Redis SET failed, skipping cache');
+  }
+
+  return response;
 };

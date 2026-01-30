@@ -57,6 +57,14 @@ model Airport {
   id   Int    @id @default(autoincrement())
   name String
 }
+model RequestLog {
+  id        Int      @id @default(autoincrement())
+  endpoint  String
+  ipAddress String
+  createdAt DateTime @default(now())
+}
+
+
 
 
 

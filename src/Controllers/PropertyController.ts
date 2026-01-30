@@ -8,8 +8,12 @@ import { HttpStatusCode } from '../Utils/StatusCode.Enum';
 import { AppError } from '../Utils/AppError';
 import { errorMessage,UserRole } from '../Utils/Messages.Enum';
 
+
+
 export class PropertyController {
-  static async getProperties(req: FastifyRequest, reply: FastifyReply) {
+  static async getProperties(req: FastifyRequest, reply: FastifyReply) 
+  {
+    
     try {
       
       const parsedQuery = getPropertiesQuerySchema.parse(
