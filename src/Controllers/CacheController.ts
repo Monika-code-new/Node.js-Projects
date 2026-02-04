@@ -26,13 +26,15 @@ export class CacheController {
       const result = await CacheService.getRegions();
 
       reply.status(HttpStatusCode.OK).send({
-        source: result.source,
-        data: result.data,
+        source: result?.source?result.source:null,
+        data: result?.data?result.data:null,
       });
     } catch (error) {
       reply.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send({
         message: cacheMessage.FAILED_TO_FETCH,
+      
       });
+       throw error
     }
   }
 

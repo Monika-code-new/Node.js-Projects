@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import cors from '@fastify/cors';
 import { errorHandler } from './Utils/ErrorHandler';
 import fastifyLoggerConfig from './Utils/FastifyLoggerConfig';
 import redis, { initRedis } from './RedisClient';
@@ -13,6 +14,11 @@ async function start() {
   const app = Fastify({
     logger:fastifyLoggerConfig 
   });
+  
+  await app.register(cors, {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+  });
   await requestLogger(app);
   app.decorate('redis', redis);
 
@@ -25,7 +31,7 @@ async function start() {
 
   try {
     await app.listen({
-      port: Number(process.env.PORT) || 3000,
+      port: Number(process.env.PORT) || 3001,
       host: '0.0.0.0',
     });
     app.log.info('Server running on http://localhost:3000');
@@ -38,3 +44,5 @@ async function start() {
 
 // Start the application
 start();
+
+

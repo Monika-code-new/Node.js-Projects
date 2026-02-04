@@ -4,7 +4,8 @@ export const redisConfig = {
   cacheTTL: parseInt(process.env.CACHE_TTL || '60', 10),
 
   ttl: {
-    regions: Number(process.env.REGION_CACHE_TTL) || 60,
-    airports: Number(process.env.AIRPORT_CACHE_TTL) || 120,
+    regions: Number(process.env.REGION_CACHE_TTL) || 1200,
+    airports: Number(process.env.AIRPORT_CACHE_TTL) || 1200,
+    ivector: Number(process.env.IVECTOR_CACHE_TTL) || 60,
   },
 };

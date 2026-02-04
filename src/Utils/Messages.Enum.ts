@@ -1,3 +1,5 @@
+import { success } from "zod";
+
 // Utils/messages.enum.ts
 export enum errorMessage {
   INTERNAL_SERVER = 'Internal Server Error',
@@ -18,4 +20,13 @@ export enum cacheMessage {
   AIRPORT_CACHE = 'airports cached successfully',
   FAILED_CACHE_AIRPORT ='Failed to cache airports',
   AIRPORT_NOT_FOUND = 'airports not found in cache',
+}
+export enum CACHE_KEYS {
+  REGIONS = 'regions',
+  AIRPORTS = 'airports',
+  
+};
+export enum successMessage {
+   Search_Started =  'Search started'
+
 }

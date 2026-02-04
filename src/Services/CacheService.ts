@@ -1,6 +1,6 @@
 import { prisma } from '../Prisma/Client';
 import { setCache, getCache } from '../Utils/CacheUtil';
-import { CACHE_KEYS } from '../Config/CacheKeys';
+import { CACHE_KEYS } from '../Utils/Messages.Enum';
 import { redisConfig } from '../Config/RedisConfig';
 
 export class CacheService {
@@ -20,12 +20,12 @@ export class CacheService {
 
   //  GET REGIONS (Redis → DB fallback)
   static async getRegions() {
-    const cachedRegions = await getCache(CACHE_KEYS.REGIONS);
+    const cachedRegions =  await getCache(CACHE_KEYS.REGIONS);
     if (cachedRegions) {
       return { source: 'redis', data: cachedRegions };
     }
 
-    const regions = await prisma.region.findMany();
+    /* const regions = await prisma.region.findMany();
 
     await setCache(
       CACHE_KEYS.REGIONS,
@@ -33,7 +33,7 @@ export class CacheService {
       redisConfig.ttl.regions
     );
 
-    return { source: 'db', data: regions };
+    return { source: 'db', data: regions }; */
   }
 
   // FORCE CACHE AIRPORTS
@@ -56,7 +56,7 @@ export class CacheService {
       return { source: 'redis', data: cachedAirports };
     }
 
-    const airports = await prisma.airport.findMany();
+    /* const airports = await prisma.airport.findMany();
 
     await setCache(
       CACHE_KEYS.AIRPORTS,
@@ -64,6 +64,6 @@ export class CacheService {
       redisConfig.ttl.airports
     );
 
-    return { source: 'db', data: airports };
+    return { source: 'db', data: airports }; */
   }
 }
