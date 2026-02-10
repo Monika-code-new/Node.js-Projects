@@ -14,34 +14,34 @@ generator client {
 }
 
 model Destination {
-  id         Int          @id @default(autoincrement())
-  name       String
-  metadata   Json
-  active     Boolean      @default(true)
-  parentId   Int? 
-  parent     Destination? @relation("DestinationHierarchy", fields: [parentId], references: [id])
-  children   Destination[] @relation("DestinationHierarchy")
+  id       Int           @id @default(autoincrement())
+  name     String
+  metadata Json
+  active   Boolean       @default(true)
+  parentId Int?
+  parent   Destination?  @relation("DestinationHierarchy", fields: [parentId], references: [id])
+  children Destination[] @relation("DestinationHierarchy")
 
   regions    Region[]
   properties Property[]
 }
 
 model Region {
-  id            Int          @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   name          String
   metadata      Json
-  active        Boolean      @default(true)
+  active        Boolean     @default(true)
   parentId      Int?
-  parent        Region?      @relation("RegionHierarchy", fields: [parentId], references: [id])
-  children      Region[]     @relation("RegionHierarchy")
+  parent        Region?     @relation("RegionHierarchy", fields: [parentId], references: [id])
+  children      Region[]    @relation("RegionHierarchy")
   destinationId Int
-  destination   Destination  @relation(fields: [destinationId], references: [id])
+  destination   Destination @relation(fields: [destinationId], references: [id])
 
-  properties    Property[]
+  properties Property[]
 }
 
 model Property {
-  id            Int        @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   name          String
   destinationId Int
   destination   Destination @relation(fields: [destinationId], references: [id])
@@ -50,13 +50,14 @@ model Property {
   address       String
   contactNumber String
   description   String
-  isActive       Boolean     @default(true)
+  isActive      Boolean     @default(true)
 }
 
 model Airport {
   id   Int    @id @default(autoincrement())
   name String
 }
+
 model RequestLog {
   id        Int      @id @default(autoincrement())
   endpoint  String
@@ -64,7 +65,72 @@ model RequestLog {
   createdAt DateTime @default(now())
 }
 
+model TravelProperties {
+  id          Int  @id @default(autoincrement()) @db.UnsignedInt
+  location_id Int  @db.UnsignedInt
+  layout_id   Int  @db.UnsignedInt
+  rating_id   Int? @db.UnsignedInt
 
+  name            String
+  slug            String
+  suspended       Int
+  top             Int
+  meta_content    String? @db.Text
+  metadata         Json?
+  iv_reference_id Int?    @db.UnsignedInt
 
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+  deleted_at DateTime? @db.Timestamp(0)
 
+  //relations
+  page   Pages   @relation(fields: [location_id], references: [id])
+  layout Layouts @relation(fields: [layout_id], references: [id])
+  rating ListsRatings? @relation(fields: [rating_id], references: [id])
+
+  @@index([iv_reference_id])
+  @@map("travel_properties")
+}
+
+model ListsRatings {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  name       String    @unique
+  iv_code    Int?
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+
+  travelProperties TravelProperties[]
+
+  @@map("lists_ratings")
+}
+
+model Pages {
+  id        Int  @id @default(autoincrement())
+  parent_id Int?
+  layout_id Int?
+
+  name       String?
+  slug       String?
+  identifier String?
+  metadata   Json?
+  active     Boolean?
+  created_at DateTime? @db.Timestamp(0)
+
+  parent   Pages?  @relation("PageHierarchy", fields: [parent_id], references: [id])
+  children Pages[] @relation("PageHierarchy")
+
+  layout     Layouts?           @relation(fields: [layout_id], references: [id])
+  properties TravelProperties[]
+
+  @@map("pages")
+}
+model Layouts {
+  id   Int     @id @default(autoincrement())
+  name String?
+
+  pages            Pages[]
+  TravelProperties TravelProperties[]
+
+  @@map("layouts")
+}
 

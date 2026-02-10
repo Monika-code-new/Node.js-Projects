@@ -40,9 +40,15 @@ class CacheService {
         if (cachedAirports) {
             return { source: 'redis', data: cachedAirports };
         }
-        const airports = await Client_1.prisma.airport.findMany();
-        await (0, CacheUtil_1.setCache)(Messages_Enum_1.CACHE_KEYS.AIRPORTS, airports, RedisConfig_1.redisConfig.ttl.airports);
-        return { source: 'db', data: airports };
+        /* const airports = await prisma.airport.findMany();
+    
+        await setCache(
+          CACHE_KEYS.AIRPORTS,
+          airports,
+          redisConfig.ttl.airports
+        );
+    
+        return { source: 'db', data: airports }; */
     }
 }
 exports.CacheService = CacheService;

@@ -1,0 +1,198 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Destination {
+  id         Int          @id @default(autoincrement())
+  name       String
+  metadata   Json
+  active     Boolean      @default(true)
+  parentId   Int? 
+  parent     Destination? @relation("DestinationHierarchy", fields: [parentId], references: [id])
+  children   Destination[] @relation("DestinationHierarchy")
+
+  regions    Region[]
+  properties Property[]
+}
+
+model Region {
+  id            Int          @id @default(autoincrement())
+  name          String
+  metadata      Json
+  active        Boolean      @default(true)
+  parentId      Int?
+  parent        Region?      @relation("RegionHierarchy", fields: [parentId], references: [id])
+  children      Region[]     @relation("RegionHierarchy")
+  destinationId Int
+  destination   Destination  @relation(fields: [destinationId], references: [id])
+
+  properties    Property[]
+}
+
+model Property {
+  id            Int        @id @default(autoincrement())
+  name          String
+  destinationId Int
+  destination   Destination @relation(fields: [destinationId], references: [id])
+  regionId      Int
+  region        Region      @relation(fields: [regionId], references: [id])
+  address       String
+  contactNumber String
+  description   String
+  isActive       Boolean     @default(true)
+}
+
+model Airport {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+model RequestLog {
+  id        Int      @id @default(autoincrement())
+  endpoint  String
+  ipAddress String
+  createdAt DateTime @default(now())
+}
+model TravelProperties {
+  id               Int       @id @default(autoincrement()) @db.UnsignedInt
+  location_id      Int       @db.UnsignedInt
+  layout_id        Int       @db.UnsignedInt
+  type_id          Int       @default(1) @db.TinyInt
+  rating_id        Int?      @db.UnsignedInt
+  name             String
+  slug             String
+  latitude         Decimal?  @db.Decimal(23, 20)
+  longitude        Decimal?  @db.Decimal(23, 20)
+  suspended        Int
+  top              Int
+  exclusive        Boolean
+  package_only     Boolean
+  metadata         Json?
+  created_at       DateTime? @db.Timestamp(0)
+  updated_at       DateTime? @db.Timestamp(0)
+  deleted_at       DateTime? @db.Timestamp(0)
+  drafted_at       DateTime? @db.Timestamp(0)
+  expects_approval Boolean   @default(false)
+  iv_reference_id  Int?      @db.UnsignedInt
+  iv_id            Int?      @db.UnsignedInt
+  iv_resort_id     Int?      @db.UnsignedInt
+  meta_content     String?   @db.Text
+  home_exclusive   Boolean
+  region_exclusive Int       @db.UnsignedTinyInt
+  non_featured     Int
+  pre_live         Int
+  partner_id       Int?      @db.UnsignedInt
+  // cruise_line_id             Int                           @db.UnsignedInt
+  // ship_id                    Int                           @db.UnsignedInt
+ 
+  travel_cruises             travel_cruises[]
+  layouts                    layouts                      @relation(fields: [layout_id], references: [id], map: "travel_properties_layout_id_foreign")
+  pages                      pages                        @relation(fields: [location_id], references: [id], map: "travel_properties_location_id_foreign")
+  lists_ratings              lists_ratings?               @relation(fields: [rating_id], references: [id], onDelete: Restrict, map: "travel_properties_rating_id_foreign")
+  travel_properties_rooms    travel_properties_rooms[]
+  travel_property_decks      travel_property_decks[]
+  travel_property_deposits   travel_property_deposits[]
+  travel_property_meal_bases travel_property_meal_bases[]
+  travel_property_offers     travel_property_offers[]
+  travel_contract_rates      travel_contract_rates[]
+  travel_contract_details    travel_contract_details[]
+  partner                    partners?                    @relation(fields: [partner_id], references: [id])
+  supplements                TravelContractSupplements[] // relation back
+  TravelContractOffers       TravelContractOffers[]
+  TravelContractTaxes        TravelContractTaxes[]
+  competitor_mappings        competitor_mapping[]
+ 
+  @@unique([location_id, slug], map: "slug")
+  @@index([region_exclusive], map: "region_exclusive")
+  @@index([exclusive], map: "travel_properties_exclusive_index")
+  @@index([home_exclusive], map: "travel_properties_home_exclusive_index")
+  @@index([iv_reference_id], map: "travel_properties_iv_reference_id_index")
+  @@index([layout_id], map: "travel_properties_layout_id_index")
+  @@index([location_id], map: "travel_properties_location_id_index")
+  @@index([non_featured], map: "travel_properties_non_featured_index")
+  @@index([partner_id], map: "travel_properties_partner_id_index")
+  @@index([pre_live], map: "travel_properties_pre_live_index")
+  @@index([rating_id], map: "travel_properties_rating_id_index")
+  @@fulltext([meta_content], map: "fts")
+  @@map("travel_properties")
+}
+ 
+model lists_ratings {
+  id                Int                    @id @default(autoincrement()) @db.UnsignedInt
+  name              String                 @unique(map: "lists_ratings_name_unique")
+  iv_code           Int?
+  category          lists_ratings_category
+  created_at        DateTime?              @db.Timestamp(0)
+  updated_at        DateTime?              @db.Timestamp(0)
+  travel_flydrives  travel_flydrives[]
+  travel_properties TravelProperties[]
+}
+model pages {
+  id                           Int                            @id @default(autoincrement()) @db.UnsignedInt
+  lft                          Int                            @default(0) @map("_lft") @db.UnsignedInt
+  rgt                          Int                            @default(0) @map("_rgt") @db.UnsignedInt
+  parent_id                    Int?                           @db.UnsignedInt
+  layout_id                    Int                            @db.UnsignedInt
+  name                         String
+  slug                         String
+  identifier                   String?                        @unique(map: "pages_identifier_unique")
+  metadata                     Json?
+  canonical                    String?
+  active                       Int                            @default(1) @db.TinyInt
+  cruise_active                Boolean                        @default(false)
+  fly_drive_active             Boolean                        @default(false)
+  type                         Int                            @default(1) @db.TinyInt
+  created_at                   DateTime?                      @db.Timestamp(0)
+  updated_at                   DateTime?                      @db.Timestamp(0)
+  deleted_at                   DateTime?                      @db.Timestamp(0)
+  drafted_at                   DateTime?                      @db.Timestamp(0)
+  expects_approval             Boolean                        @default(false)
+  meta_content                 String?                        @db.Text
+  meta_flight_markup           Float?                         @db.Float
+  admin_rota_daily             admin_rota_daily[]
+  admin_rotas                  admin_rotas[]
+  cms_itineraries              cms_itineraries[]
+  has_destinations             has_destinations[]
+  has_handcrafted_pages        has_handcrafted_pages[]
+  holiday_bookings             holiday_bookings[]
+  holiday_quotes               holiday_quotes[]
+  itinerary_builders           itinerary_builders[]
+  ivector_airport_groups       ivector_airport_groups[]
+  ivector_airports             ivector_airports[]
+  ivector_ports                ivector_ports[]
+  ivector_searches             ivector_searches[]
+  lists_port_of_calls          lists_port_of_calls[]
+  lists_widgety_regions        lists_widgety_regions[]
+  layouts                      layouts                        @relation(fields: [layout_id], references: [id], onDelete: Cascade, map: "pages_layout_id_foreign")
+  travel_cruises               travel_cruises[]
+  travel_flight_availabilities travel_flight_availabilities[]
+  travel_flydrives             travel_flydrives[]
+  travel_properties            TravelProperties[]
+  travel_regional_departures   travel_regional_departures[]
+  travel_tours                 travel_tours[]
+ 
+  parent               pages?                 @relation("ParentChild", fields: [parent_id], references: [id])
+  children             pages[]                @relation("ParentChild")
+  destination_settings destination_settings[]
+ 
+  @@unique([parent_id, slug], map: "pages_slug_unique")
+  @@index([lft, rgt, parent_id], map: "pages__lft__rgt_parent_id_index")
+  @@index([cruise_active], map: "pages_cruise_active_index")
+  @@index([fly_drive_active], map: "pages_fly_drive_active_index")
+  @@index([layout_id], map: "pages_layout_id_index")
+  @@fulltext([meta_content], map: "fts")
+}
+ 
+
+
+

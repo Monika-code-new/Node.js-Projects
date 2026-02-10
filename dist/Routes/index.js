@@ -6,8 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AllRoutes;
 const PropertyRoutes_1 = __importDefault(require("./PropertyRoutes"));
 const CacheRoute_1 = __importDefault(require("./CacheRoute"));
+const IVectorRoutes_1 = require("./IVectorRoutes");
 async function AllRoutes(app) {
     await (0, PropertyRoutes_1.default)(app);
     // Cache routes
     await (0, CacheRoute_1.default)(app);
+    await (0, IVectorRoutes_1.ivectorRoutes)(app);
 }

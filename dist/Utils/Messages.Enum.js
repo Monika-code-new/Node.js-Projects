@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CACHE_KEYS = exports.cacheMessage = exports.UserRole = exports.errorMessage = void 0;
+exports.successMessage = exports.CACHE_KEYS = exports.cacheMessage = exports.UserRole = exports.errorMessage = void 0;
 // Utils/messages.enum.ts
 var errorMessage;
 (function (errorMessage) {
@@ -31,3 +31,7 @@ var CACHE_KEYS;
     CACHE_KEYS["AIRPORTS"] = "airports";
 })(CACHE_KEYS || (exports.CACHE_KEYS = CACHE_KEYS = {}));
 ;
+var successMessage;
+(function (successMessage) {
+    successMessage["Search_Started"] = "Search started";
+})(successMessage || (exports.successMessage = successMessage = {}));

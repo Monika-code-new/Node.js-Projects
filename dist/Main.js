@@ -37,6 +37,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const fastify_1 = __importDefault(require("fastify"));
+const cors_1 = __importDefault(require("@fastify/cors"));
 const ErrorHandler_1 = require("./Utils/ErrorHandler");
 const FastifyLoggerConfig_1 = __importDefault(require("./Utils/FastifyLoggerConfig"));
 const RedisClient_1 = __importStar(require("./RedisClient"));
@@ -48,6 +49,10 @@ async function start() {
     const app = (0, fastify_1.default)({
         logger: FastifyLoggerConfig_1.default
     });
+    await app.register(cors_1.default, {
+        origin: 'http://localhost:3000',
+        methods: ['GET', 'POST'],
+    });
     await (0, RequestLogger_1.requestLogger)(app);
     app.decorate('redis', RedisClient_1.default);
     // Register centralized error handler
@@ -56,7 +61,7 @@ async function start() {
     app.register(Routes_1.default, { prefix: '/api' });
     try {
         await app.listen({
-            port: Number(process.env.PORT) || 3000,
+            port: Number(process.env.PORT) || 3001,
             host: '0.0.0.0',
         });
         app.log.info('Server running on http://localhost:3000');
