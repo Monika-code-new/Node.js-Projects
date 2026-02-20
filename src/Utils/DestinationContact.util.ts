@@ -23,7 +23,7 @@ export const findDestinationContact = async (
   const contact =
     typeof destination.metadata === 'object' &&
     destination.metadata !== null &&
-    'contact' in destination.metadata
+    'contact'
       ? (destination.metadata as any).contact
       : null;
 

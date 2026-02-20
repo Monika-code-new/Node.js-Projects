@@ -8,7 +8,7 @@ import { AppError } from '../Utils/AppError';
 import { errorMessage } from '../Utils/Messages.Enum';
 import { HttpStatusCode } from '../Utils/StatusCode.Enum';
 import { findDestinationContact } from '../Utils/DestinationContact.util';
-import redis from '../RedisClient';
+import {redis}from '../RedisClient';
 
 //const CACHE_TTL = 60; // seconds
 const CACHE_TTL = parseInt(process.env.CACHE_TTL || '60', 10);
@@ -33,7 +33,7 @@ export const getAllProperties = async (
   } catch (err) {
     console.warn('Redis GET failed, skipping cache');
   }
-
+  
   //DESTINATION AIRPORTS 
   const getDestinationAirports = async (
     properties: {
@@ -81,25 +81,60 @@ export const getAllProperties = async (
 
     return destinationAirportMap;
   };
-
+//await prisma.$queryRaw`SELECT *, SLEEP(12) FROM Property LIMIT 1`;
   // NO DESTINATION FILTER 
   if (!destinationId) {
-    const properties = await prisma.property.findMany({
-      where: isAdmin
-        ? {}
-        : {
-            isActive: true,
-            destination: { active: true },
-          },
-      orderBy: { id: 'asc' },
-      include: {
-        destination: {
-          select: { id: true, name: true, metadata: true },
-        },
-        region: { select: { name: true } },
-      },
-    });
+    
+  
+     /* let properties: any[] = [];
+const maxDurationMs = 15000; // 15 seconds
+const startTotal = Date.now();
 
+while (Date.now() - startTotal < maxDurationMs) {
+  const start = Date.now();
+
+  properties = await prisma.property.findMany({
+    where: isAdmin
+      ? {}
+      : {
+          isActive: true,
+          destination: { active: true },
+        },
+    include: {
+      destination: {
+        select: { id: true, name: true, metadata: true },
+      },
+      region: { select: { name: true } },
+     
+      
+    },
+    orderBy: { id: 'asc' },
+    take: 15000, // fetch many rows to increase query time
+  });
+
+  const duration = Date.now() - start;
+  console.log(`Iteration query duration: ${duration}ms`);
+
+  
+} */
+// Testing only — adds artificial delay inside Prisma query
+const properties = await prisma.property.findMany({
+  where: isAdmin
+    ? {}
+    : {
+        isActive: true,
+        destination: { active: true },
+      },
+  include: {
+    destination: { select: { id: true, name: true, metadata: true } },
+    region: { select: { name: true } },
+  },
+ 
+});
+
+// Artificial delay to exceed threshold
+await new Promise(resolve => setTimeout(resolve, 11000)); // 11 seconds
+ 
     if (!properties.length) {
       throw new AppError(
         errorMessage.NO_PROPERTIES_FOUND,

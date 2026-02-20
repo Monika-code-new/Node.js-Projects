@@ -3,67 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseRoomTypes = parseRoomTypes;
 exports.parsePropertyResult = parsePropertyResult;
 exports.parseIvectorXML = parseIvectorXML;
-/*  import { parseStringPromise } from 'xml2js';
-
-export async function parseIvectorXML(xml: string) {
-  const parsed = await parseStringPromise(xml, {
-    explicitArray: true,
-    trim: true,
-  });
-
-  // Extract all properties from iVector response
-  const propertyResults =
-    parsed?.PropertySearchResponse?.PropertyResults?.[0]?.PropertyResult ?? [];
-    
-
-  console.log('Total properties from iVector:', propertyResults.length);
-
-  const properties: {
-    propertyRef: string;
-    rooms: string[];
-  }[] = [];
-
-  // Loop through EACH property returned by iVector
-  for (const property of propertyResults) {
-    const propertyRef = property?.PropertyReferenceID?.[0];
-    if (!propertyRef) {
-      console.warn('Skipped property without PropertyReferenceID');
-      continue;
-    }
-
-    // Extract room types for this property
-    const roomTypes = property?.RoomTypes?.[0]?.RoomType ?? [];
-    const rooms: string[] = [];
-
-    for (const room of roomTypes) {
-      const roomName = room?.RoomType?.[0];
-      if (roomName) {
-        rooms.push(String(roomName));
-      }
-    }
-
-    properties.push({
-      propertyRef: String(propertyRef),
-      rooms,
-    });
-    console.log('Parsed property:', {
-  propertyRef,
-  rooms,
-});
-
-  }
-
-  
-  console.log('Total properties parsed:', properties.length);
-
-  return properties;
-}
-  */
 const xml2js_1 = require("xml2js");
-/* ===================== HELPERS ===================== */
-/**
- * Safely get text from xml2js node
- */
 function getXmlNodeText(node) {
     if (!node)
         return '';
@@ -89,7 +29,6 @@ function normalizeToArray(node) {
         return [];
     return Array.isArray(node) ? node : [node];
 }
-/* ===================== ROOM TYPES ===================== */
 function parseRoomTypes(roomTypesNode) {
     let roomTypes = normalizeToArray(roomTypesNode?.[0]?.RoomType ?? roomTypesNode?.RoomType);
     const result = [];
@@ -237,7 +176,6 @@ function parseRoomTypes(roomTypesNode) {
     }
     return result;
 }
-/* ===================== PROPERTY RESULT ===================== */
 function parsePropertyResult(property) {
     const result = {};
     result.metadata = {};
@@ -282,7 +220,6 @@ function parsePropertyResult(property) {
         delete result.metadata;
     return result;
 }
-/* ===================== ENTRY POINT ===================== */
 async function parseIvectorXML(xml) {
     const parsed = await (0, xml2js_1.parseStringPromise)(xml, {
         explicitArray: true,
@@ -291,8 +228,8 @@ async function parseIvectorXML(xml) {
     let propertyResults = parsed?.PropertySearchResponse?.PropertyResults?.[0]?.PropertyResult ?? [];
     // Normalize PropertyResult to array
     propertyResults = normalizeToArray(propertyResults);
-    console.log('Number of PropertyResults parsed:', propertyResults.length);
+    //console.log('Number of PropertyResults parsed:', propertyResults.length);
     const parsedResults = propertyResults.map(parsePropertyResult);
-    console.log('Parsed results preview:', parsedResults.slice(0, 3)); // first 3 props
+    //console.log('Parsed results preview:', parsedResults.slice(0, 3)); // first 3 props
     return parsedResults;
 }

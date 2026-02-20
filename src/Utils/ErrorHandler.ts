@@ -1,4 +1,4 @@
-
+/* 
 // Utils/ErrorHandler.ts
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { ZodError } from 'zod';
@@ -32,3 +32,48 @@ export const errorHandler = (
     message: errorMessage.INTERNAL_SERVER,
   });
 };
+ */
+/* import { FastifyError, FastifyReply, FastifyRequest } from "fastify";
+import { logger } from "../Logging";
+
+export function errorHandler(
+  err: FastifyError,
+  req: FastifyRequest,
+  reply: FastifyReply
+) {
+
+  logger.error({
+    type: "api-error",
+    message: err.message,
+    stack: err.stack
+  });
+
+  reply.status(500).send({
+    message: "Internal Server Error"
+  });
+}
+ */
+ import { FastifyError, FastifyReply, FastifyRequest } from "fastify";
+import { logger } from "../Logging";
+import { getContext } from "../Utils/RequestContext";
+
+export function errorHandler(
+  err: FastifyError,
+  req: FastifyRequest,
+  reply: FastifyReply
+) {
+
+  logger.error({
+    type: "api-error",
+    message: err.message,
+    stack: err.stack,
+    method: req.method,
+    url: req.url,
+    reqId: getContext("reqId"),
+  }, "Request error");
+
+  reply.status(500).send({
+    message: "Internal Server Error"
+  });
+}
+ 

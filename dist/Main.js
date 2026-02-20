@@ -1,75 +1,279 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+/* import "newrelic"  // ← ADD THIS LINE FIRST
+
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import { errorHandler } from './Utils/ErrorHandler';
+import fastifyLoggerConfig from './Utils/FastifyLoggerConfig';
+import redis, { initRedis } from './RedisClient';
+import AllRoutes from './Routes';
+import newRelicPlugin from "./Plugins/NewRelic"
+
+async function start() {
+
+  await initRedis();
+
+  const app = Fastify({
+    logger: fastifyLoggerConfig
+  });
+   await app.register(newRelicPlugin); // ← ADD
+  await app.register(cors, {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+  });
+
+  app.decorate('redis', redis);
+
+  app.setErrorHandler(errorHandler);
+
+  app.register(AllRoutes, { prefix: '/api' });
+
+  try {
+    await app.listen({
+      port: Number(process.env.PORT) || 3001,
+      host: '0.0.0.0',
+    });
+
+    app.log.info('Server running on http://localhost:3000');
+
+  } catch (error) {
+    app.log.error(error, 'Failed to start server');
+    process.exit(1);
+  }
+}
+
+start();
+ */
+/* import "newrelic"
+
+import Fastify from "fastify"
+import cors from "@fastify/cors"
+import { errorHandler } from "./Utils/ErrorHandler"
+import fastifyLoggerConfig from "./Utils/FastifyLoggerConfig"
+import redis, { initRedis } from "./RedisClient"
+import AllRoutes from "./Routes"
+import newRelicPlugin from "./Plugins/NewRelic"
+
+async function start() {
+
+  const app = Fastify({ logger: fastifyLoggerConfig })
+
+  try {
+    app.log.info("Initializing services...")
+
+    await initRedis()
+    app.log.info("Redis connected")
+
+    await app.register(newRelicPlugin)
+    app.log.info("New Relic plugin registered")
+
+    await app.register(cors, {
+      origin: "http://localhost:3000",
+      methods: ["GET","POST"]
+    })
+
+    app.decorate("redis", redis)
+    app.setErrorHandler(errorHandler)
+    app.register(AllRoutes, { prefix: "/api" })
+
+    await app.listen({
+      port: Number(process.env.PORT) || 3001,
+      host: "0.0.0.0"
+    })
+
+    app.log.info("Server started successfully")
+
+  } catch (err) {
+    app.log.fatal(err, "Startup failure")
+    process.exit(1)
+  }
+}
+
+start()
+ */
+/* import "newrelic";
+
+import Fastify from "fastify";
+import cors from "@fastify/cors";
+import { errorHandler } from "./Utils/ErrorHandler";
+import  { redis,initRedis } from "./RedisClient";
+import AllRoutes from "./Routes";
+import { registerRequestContext } from "./Middleware/RequestContext";
+
+async function start() {
+
+  const app = Fastify();
+
+  registerRequestContext(app);
+
+  try {
+    app.log.info("Initializing services...");
+
+    await initRedis();
+    app.log.info("Redis connected");
+
+    await app.register(cors, {
+      origin: "http://localhost:3000",
+      methods: ["GET","POST"]
+    });
+
+    app.decorate("redis", redis);
+
+    app.setErrorHandler(errorHandler);
+
+    app.register(AllRoutes, { prefix: "/api" });
+
+    await app.listen({
+      port: Number(process.env.PORT) || 3001,
+      host: "0.0.0.0"
+    });
+
+    app.log.info("Server started successfully");
+    app.log.info("NR_LOG_TEST");
+
+  } catch (err) {
+    app.log.fatal(err, "Startup failure");
+    process.exit(1);
+  }
+}
+
+start();
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/* import "newrelic";
+
+import Fastify from "fastify";
+import cors from "@fastify/cors";
+import { errorHandler } from "./Utils/ErrorHandler";
+import { redis, initRedis } from "./RedisClient";
+import AllRoutes from "./Routes";
+import { registerRequestContext } from "./Middleware/RequestContext";
+import { logger } from "./Logging/Pino";
+
+async function start() {
+
+  const app = Fastify({ logger });
+
+  registerRequestContext(app);
+
+  try {
+    app.log.info("Initializing services...");
+
+    await initRedis();
+    app.log.info("Redis connected");
+
+    await app.register(cors, {
+      origin: "http://localhost:3000",
+      methods: ["GET","POST"]
+    });
+
+    app.decorate("redis", redis);
+
+    app.setErrorHandler(errorHandler);
+
+    app.register(AllRoutes, { prefix: "/api" });
+
+    await app.listen({
+      port: Number(process.env.PORT) || 3001,
+      host: "0.0.0.0"
+    });
+
+    app.log.info("Server started successfully");
+    app.log.info("NR_LOG_TEST");
+
+  } catch (err) {
+    app.log.fatal(err, "Startup failure");
+    process.exit(1);
+  }
+  
+}
+
+start();
+ */
+/**
+ * IMPORTANT:
+ * New Relic is preloaded from npm scripts:
+ * `-r dotenv/config -r newrelic`
+ * so env vars are available before the agent starts.
+ */
+/* import Fastify from "fastify";
+import cors from "@fastify/cors";
+
+import { logger, registerRequestLogger, createRedis, createPrisma } from "./Logging";
+import { registerRequestContext } from "./Middleware/RequestContext";
+import { errorHandler } from "./Utils/ErrorHandler";
+import AllRoutes from "./Routes";
+import { pinoConfig } from "./Logging/Pino";
+import newRelicLogger from "./Plugins/NewrelicLogger";
+
+async function start() {
+
+const app = Fastify();
+app.register(newRelicLogger);
+
+  registerRequestContext(app);
+  registerRequestLogger(app);
+
+  const redis = createRedis();
+  const prisma = createPrisma();
+
+  app.decorate("redis", redis);
+  app.decorate("prisma", prisma);
+
+  app.setErrorHandler(errorHandler);
+
+  await app.register(cors);
+
+  app.register(AllRoutes, { prefix: "/api" });
+
+  await app.listen({
+    port: 3001,
+    host: "0.0.0.0"
+  });
+
+  logger.info("Server started");
+  console.log("NR_LOG_TEST_123");
+
+}
+
+start();
+ */
+// MUST be first import — New Relic hooks into modules here
+require("newrelic");
 const fastify_1 = __importDefault(require("fastify"));
 const cors_1 = __importDefault(require("@fastify/cors"));
+const Logging_1 = require("./Logging");
+const Context_1 = require("./Observability/Context");
 const ErrorHandler_1 = require("./Utils/ErrorHandler");
-const FastifyLoggerConfig_1 = __importDefault(require("./Utils/FastifyLoggerConfig"));
-const RedisClient_1 = __importStar(require("./RedisClient"));
 const Routes_1 = __importDefault(require("./Routes"));
-const RequestLogger_1 = require("./Plugins/RequestLogger");
+const NewrelicLogger_1 = __importDefault(require("./Plugins/NewrelicLogger"));
 async function start() {
-    await (0, RedisClient_1.initRedis)();
-    // Create Fastify instance
-    const app = (0, fastify_1.default)({
-        logger: FastifyLoggerConfig_1.default
-    });
-    await app.register(cors_1.default, {
-        origin: 'http://localhost:3000',
-        methods: ['GET', 'POST'],
-    });
-    await (0, RequestLogger_1.requestLogger)(app);
-    app.decorate('redis', RedisClient_1.default);
-    // Register centralized error handler
-    app.setErrorHandler(ErrorHandler_1.errorHandler);
-    // Register routes
-    app.register(Routes_1.default, { prefix: '/api' });
     try {
+        // pass logger config here
+        const app = (0, fastify_1.default)();
+        // register plugin that sends logs to New Relic
+        await app.register(NewrelicLogger_1.default);
+        (0, Context_1.registerRequestContext)(app);
+        (0, Logging_1.registerRequestLogger)(app);
+        const redis = (0, Logging_1.createRedis)();
+        const prisma = (0, Logging_1.createPrisma)();
+        app.decorate("redis", redis);
+        app.decorate("prisma", prisma);
+        app.setErrorHandler(ErrorHandler_1.errorHandler);
+        await app.register(cors_1.default);
+        app.register(Routes_1.default, { prefix: "/api" });
         await app.listen({
-            port: Number(process.env.PORT) || 3001,
-            host: '0.0.0.0',
+            port: 3001,
+            host: "0.0.0.0"
         });
-        app.log.info('Server running on http://localhost:3000');
+        Logging_1.logger.info("Server started successfully");
     }
-    catch (error) {
-        app.log.error(error, 'Failed to start server');
+    catch (err) {
+        Logging_1.logger.error({ err }, "Server failed to start");
         process.exit(1);
     }
 }
-// Start the application
 start();

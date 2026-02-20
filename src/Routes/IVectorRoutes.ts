@@ -12,4 +12,5 @@ export async function ivectorRoutes(app: FastifyInstance) {
     searchController.getSearchResult
   );
  
+ 
 }

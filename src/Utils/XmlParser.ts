@@ -258,7 +258,7 @@ export function parsePropertyResult(property: any): ParsedProperty {
   return result;
 }
 
-/* ===================== ENTRY POINT ===================== */
+
 export async function parseIvectorXML(xml: string): Promise<any[]> {
   const parsed = await parseStringPromise(xml, {
     explicitArray: true,
@@ -271,10 +271,10 @@ export async function parseIvectorXML(xml: string): Promise<any[]> {
   // Normalize PropertyResult to array
   propertyResults = normalizeToArray(propertyResults);
 
-  console.log('Number of PropertyResults parsed:', propertyResults.length);
+  //console.log('Number of PropertyResults parsed:', propertyResults.length);
 
   const parsedResults = propertyResults.map(parsePropertyResult);
 
-  console.log('Parsed results preview:', parsedResults.slice(0, 3)); // first 3 props
+  //console.log('Parsed results preview:', parsedResults.slice(0, 3)); // first 3 props
   return parsedResults;
 }

@@ -7,7 +7,7 @@ jest.mock('../RedisClient', () => ({
   },
 }));
 
-import redis from '../RedisClient';
+import {redis} from '../RedisClient';
 import { getCache, setCache } from '../Utils/CacheUtil';
 
 describe('CacheUtil', () => {

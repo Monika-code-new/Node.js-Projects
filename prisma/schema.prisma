@@ -1,68 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-model Destination {
-  id       Int           @id @default(autoincrement())
-  name     String
-  metadata Json
-  active   Boolean       @default(true)
-  parentId Int?
-  parent   Destination?  @relation("DestinationHierarchy", fields: [parentId], references: [id])
-  children Destination[] @relation("DestinationHierarchy")
-
-  regions    Region[]
-  properties Property[]
-}
-
-model Region {
-  id            Int         @id @default(autoincrement())
-  name          String
-  metadata      Json
-  active        Boolean     @default(true)
-  parentId      Int?
-  parent        Region?     @relation("RegionHierarchy", fields: [parentId], references: [id])
-  children      Region[]    @relation("RegionHierarchy")
-  destinationId Int
-  destination   Destination @relation(fields: [destinationId], references: [id])
-
-  properties Property[]
-}
-
-model Property {
-  id            Int         @id @default(autoincrement())
-  name          String
-  destinationId Int
-  destination   Destination @relation(fields: [destinationId], references: [id])
-  regionId      Int
-  region        Region      @relation(fields: [regionId], references: [id])
-  address       String
-  contactNumber String
-  description   String
-  isActive      Boolean     @default(true)
-}
-
-model Airport {
-  id   Int    @id @default(autoincrement())
-  name String
-}
-
-model RequestLog {
-  id        Int      @id @default(autoincrement())
-  endpoint  String
-  ipAddress String
-  createdAt DateTime @default(now())
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model TravelProperties {
@@ -94,43 +36,160 @@ model TravelProperties {
 
 model ListsRatings {
   id         Int       @id @default(autoincrement()) @db.UnsignedInt
-  name       String    @unique
+  name       String    @unique(map: "lists_ratings_name_unique")
   iv_code    Int?
   created_at DateTime? @db.Timestamp(0)
   updated_at DateTime? @db.Timestamp(0)
-
-  travelProperties TravelProperties[]
+  travelProperties TravelProperties[] 
 
   @@map("lists_ratings")
 }
 
 model Pages {
-  id        Int  @id @default(autoincrement())
-  parent_id Int?
-  layout_id Int?
-
+  id         Int       @id @default(autoincrement())
+  parent_id  Int?
+  layout_id  Int?
   name       String?
   slug       String?
   identifier String?
-  metadata   Json?
+  metadata   String?   @db.LongText
   active     Boolean?
   created_at DateTime? @db.Timestamp(0)
-
-  parent   Pages?  @relation("PageHierarchy", fields: [parent_id], references: [id])
-  children Pages[] @relation("PageHierarchy")
-
-  layout     Layouts?           @relation(fields: [layout_id], references: [id])
-  properties TravelProperties[]
+  travelProperties TravelProperties[] 
 
   @@map("pages")
 }
+
 model Layouts {
   id   Int     @id @default(autoincrement())
   name String?
 
-  pages            Pages[]
-  TravelProperties TravelProperties[]
-
   @@map("layouts")
+  travelProperties TravelProperties[] 
 }
 
+model queryerrorlog {
+  id           Int       @id @default(autoincrement())
+  model        String?   @db.VarChar(255)
+  tableName    String?   @db.VarChar(255)
+  action       String?   @db.VarChar(255)
+  query        String    @db.Text
+  params       String?   @db.Text
+  errorType    String    @db.VarChar(255)
+  errorMessage String    @db.Text
+  stack        String?   @db.Text
+  durationMs   Int?
+  createdAt    DateTime? @default(now()) @db.DateTime(0)
+}
+
+model slowquerylog {
+  id         Int       @id @default(autoincrement())
+  model      String?   @db.VarChar(255)
+  tableName  String?   @db.VarChar(255)
+  action     String?   @db.VarChar(255)
+  query      String    @db.Text
+  params     String?   @db.Text
+  durationMs Int
+  createdAt  DateTime? @default(now()) @db.DateTime(0)
+}
+
+model RedisLog {
+  id        Int      @id @default(autoincrement())
+  command   String
+  args      String?  @db.LongText
+  status    String
+  duration  Int?
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@map("redis_logs")
+}
+
+model IvRequestLog {
+  id          Int      @id @default(autoincrement())
+  url         String
+  method      String
+  requestBody String?  @db.LongText
+  statusCode  Int?
+  durationMs  Int
+  status      String
+  error       String?
+  createdAt   DateTime @default(now())
+
+  @@map("ivector_logs")
+}
+
+model airport {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model destination {
+  id                Int           @id @default(autoincrement())
+  name              String
+  metadata          String        @db.LongText
+  active            Boolean       @default(true)
+  parentId          Int?
+  destination       destination?  @relation("destinationTodestination", fields: [parentId], references: [id], map: "Destination_parentId_fkey")
+  other_destination destination[] @relation("destinationTodestination")
+  property          property[]
+  region            region[]
+
+  @@index([parentId], map: "Destination_parentId_fkey")
+}
+
+model property {
+  id            Int         @id @default(autoincrement())
+  name          String
+  destinationId Int
+  regionId      Int
+  address       String
+  contactNumber String
+  description   String
+  isActive      Boolean     @default(true)
+  destination   destination @relation(fields: [destinationId], references: [id], map: "Property_destinationId_fkey")
+  region        region      @relation(fields: [regionId], references: [id], map: "Property_regionId_fkey")
+
+  @@index([destinationId], map: "Property_destinationId_fkey")
+  @@index([regionId], map: "Property_regionId_fkey")
+}
+
+model region {
+  id            Int         @id @default(autoincrement())
+  name          String
+  metadata      String      @db.LongText
+  active        Boolean     @default(true)
+  parentId      Int?
+  destinationId Int
+  property      property[]
+  destination   destination @relation(fields: [destinationId], references: [id], map: "Region_destinationId_fkey")
+  region        region?     @relation("regionToregion", fields: [parentId], references: [id], map: "Region_parentId_fkey")
+  other_region  region[]    @relation("regionToregion")
+
+  @@index([destinationId], map: "Region_destinationId_fkey")
+  @@index([parentId], map: "Region_parentId_fkey")
+}
+
+model requestLog {
+  id        Int      @id @default(autoincrement())
+  endpoint  String
+  ipAddress String
+  createdAt DateTime @default(now())
+}
+
+model systemLog {
+  id        BigInt @id @default(autoincrement())
+  parentId  String?
+  source    String
+  action    String?
+  endpoint  String?
+  method    String?
+  query     String?
+  payload   Json?
+  status    String
+  duration  Int?
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([parentId], map: "SystemLog_parentId_idx")
+}

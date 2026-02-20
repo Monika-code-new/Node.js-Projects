@@ -18,7 +18,7 @@ const findDestinationContact = async (destinationId, visited = new Set()) => {
         return null;
     const contact = typeof destination.metadata === 'object' &&
         destination.metadata !== null &&
-        'contact' in destination.metadata
+        'contact'
         ? destination.metadata.contact
         : null;
     if (contact) {

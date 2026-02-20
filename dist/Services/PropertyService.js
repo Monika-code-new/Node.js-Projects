@@ -1,7 +1,4 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAllProperties = void 0;
 const Client_1 = require("../Prisma/Client");
@@ -9,7 +6,7 @@ const AppError_1 = require("../Utils/AppError");
 const Messages_Enum_1 = require("../Utils/Messages.Enum");
 const StatusCode_Enum_1 = require("../Utils/StatusCode.Enum");
 const DestinationContact_util_1 = require("../Utils/DestinationContact.util");
-const RedisClient_1 = __importDefault(require("../RedisClient"));
+const RedisClient_1 = require("../RedisClient");
 //const CACHE_TTL = 60; // seconds
 const CACHE_TTL = parseInt(process.env.CACHE_TTL || '60', 10);
 const getAllProperties = async (parsedQuery, role) => {
@@ -18,7 +15,7 @@ const getAllProperties = async (parsedQuery, role) => {
     const cacheKey = `properties:${role}:${JSON.stringify(parsedQuery)}`;
     //CACHE READ 
     try {
-        const cachedData = await RedisClient_1.default.get(cacheKey);
+        const cachedData = await RedisClient_1.redis.get(cacheKey);
         if (cachedData) {
             console.log('Cache HIT');
             return JSON.parse(cachedData);
@@ -53,8 +50,41 @@ const getAllProperties = async (parsedQuery, role) => {
         });
         return destinationAirportMap;
     };
+    //await prisma.$queryRaw`SELECT *, SLEEP(12) FROM Property LIMIT 1`;
     // NO DESTINATION FILTER 
     if (!destinationId) {
+        /* let properties: any[] = [];
+   const maxDurationMs = 15000; // 15 seconds
+   const startTotal = Date.now();
+   
+   while (Date.now() - startTotal < maxDurationMs) {
+     const start = Date.now();
+   
+     properties = await prisma.property.findMany({
+       where: isAdmin
+         ? {}
+         : {
+             isActive: true,
+             destination: { active: true },
+           },
+       include: {
+         destination: {
+           select: { id: true, name: true, metadata: true },
+         },
+         region: { select: { name: true } },
+        
+         
+       },
+       orderBy: { id: 'asc' },
+       take: 15000, // fetch many rows to increase query time
+     });
+   
+     const duration = Date.now() - start;
+     console.log(`Iteration query duration: ${duration}ms`);
+   
+     
+   } */
+        // Testing only — adds artificial delay inside Prisma query
         const properties = await Client_1.prisma.property.findMany({
             where: isAdmin
                 ? {}
@@ -62,14 +92,13 @@ const getAllProperties = async (parsedQuery, role) => {
                     isActive: true,
                     destination: { active: true },
                 },
-            orderBy: { id: 'asc' },
             include: {
-                destination: {
-                    select: { id: true, name: true, metadata: true },
-                },
+                destination: { select: { id: true, name: true, metadata: true } },
                 region: { select: { name: true } },
             },
         });
+        // Artificial delay to exceed threshold
+        await new Promise(resolve => setTimeout(resolve, 11000)); // 11 seconds
         if (!properties.length) {
             throw new AppError_1.AppError(Messages_Enum_1.errorMessage.NO_PROPERTIES_FOUND, StatusCode_Enum_1.HttpStatusCode.NOT_FOUND);
         }
@@ -90,7 +119,7 @@ const getAllProperties = async (parsedQuery, role) => {
             };
         }));
         try {
-            await RedisClient_1.default.set(cacheKey, JSON.stringify(response), 'EX', CACHE_TTL);
+            await RedisClient_1.redis.set(cacheKey, JSON.stringify(response), 'EX', CACHE_TTL);
         }
         catch (err) {
             console.warn('Redis SET failed, skipping cache');
@@ -146,7 +175,7 @@ const getAllProperties = async (parsedQuery, role) => {
         };
     }));
     try {
-        await RedisClient_1.default.set(cacheKey, JSON.stringify(response), 'EX', CACHE_TTL);
+        await RedisClient_1.redis.set(cacheKey, JSON.stringify(response), 'EX', CACHE_TTL);
     }
     catch (err) {
         console.warn('Redis SET failed, skipping cache');

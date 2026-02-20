@@ -1,4 +1,4 @@
-import redis from '../RedisClient';
+import {redis} from '../RedisClient';
 
 export const getCache = async (key: string) => {
   const data = await redis.get(key);
